@@ -21,10 +21,11 @@ COLORS = {
     "front_shell": Color(0.12, 0.12, 0.11),
     "back_cover": Color(0.20, 0.22, 0.17),
     "key_step": Color(0.30, 0.30, 0.28),
+    "key_next": Color(0.30, 0.30, 0.28),
     "key_ack": Color(0.30, 0.30, 0.28),
     "key_request": Color(0.30, 0.30, 0.28),
     "wheel": Color(0.30, 0.30, 0.28),
-    "talk_button": Color(0.92, 0.33, 0.13),
+    "talk_button": Color(0.30, 0.30, 0.28),  # graphite: orange is for screen alerts only
 }
 
 
@@ -45,11 +46,14 @@ def check(parts: dict, p: Tnd01Params) -> list[str]:
         overlap = (parts[name] & dummy).volume
         if overlap > 1e-3:
             problems.append(f"{name}: overlaps the payload by {overlap:.2f} mm3")
-    # Moving parts must not collide with the shell.
-    for name in ("key_step", "key_ack", "key_request", "wheel", "talk_button"):
+    # Moving parts must not collide with the shell or the board.
+    for name in [n for n in parts if n not in ("front_shell", "back_cover")]:
         overlap = (parts["front_shell"] & parts[name]).volume
         if overlap > 1e-3:
             problems.append(f"{name}: collides with front_shell by {overlap:.2f} mm3")
+        overlap = (dummy & parts[name]).volume
+        if overlap > 1e-3:
+            problems.append(f"{name}: presses into the board by {overlap:.2f} mm3")
     return problems
 
 
