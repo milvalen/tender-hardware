@@ -1,0 +1,9 @@
+[project]
+name = "tender-hardware"
+version = "0.1.0"
+description = "TENDER TND-01 enclosure as code (build123d)"
+requires-python = ">=3.10"
+dependencies = [
+    "build123d>=0.13",
+    "pyvista>=0.49",
+]
