@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+*.pyc
+.env
+.env.*
+*.key
+*.pem
+*.blend1
+renders/wip/
+.DS_Store
