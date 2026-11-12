@@ -2,7 +2,7 @@
 
 Enclosure, wiring and bill of materials for **TENDER TND-01** — a self-contained wearable unit for restaurant floor work. FIELD SERVICE UNIT.
 
-Concept, functions and the Ink Industrial design language live in [tender-vault](https://github.com/milvalen/tender-vault) (Russian).
+Concept, functions and the Ink Industrial design language live in [tender-vault](https://github.com/milvalen/tender-vault).
 
 ## Status
 
