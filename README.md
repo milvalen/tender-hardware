@@ -48,6 +48,8 @@ uv pip install --python .venv/bin/python build123d pyvista
 
 `build.py` checks that every part is a valid solid, that the shell does not overlap the boards, that keys do not collide with the shell or press into the boards, that each screw has wall around it, the cable bay width and the belt clip strain. It exits with status 1 on a failure.
 
+It also checks the cable plugs at the right end of the StickS3: the USB-C overmold must not touch the Grove plug or the shell, and the Grove plug with its cable bend must fit in the cable bay. The plug sizes in `Plugs` are guesses, so a plug problem is a `WARN` until `Plugs.measured` is set to `True` after the measurements.
+
 Before the export, `build.py` removes the old `tnd01_*.stl` and `tnd01_*.step` files from the output folder. `out/` then holds only the parts of the current revision.
 
 Change dimensions in `enclosure/params.py`, not in the model code.

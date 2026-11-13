@@ -41,6 +41,50 @@ def dual_dummy(p: Tnd01Params):
     return Pos(p.pocket_x, bay_center_y(p), p.shell.back_t + d.height / 2) * Box(d.length, d.width, d.height)
 
 
+def _board_end_x(p: Tnd01Params) -> float:
+    """X of the right end of the StickS3, where the USB-C and Grove ports are."""
+    return p.pocket_x + p.pocket[0] / 2 - p.payload.clearance
+
+
+def usb_plug_dummy(p: Tnd01Params):
+    """USB-C overmold, from the board end out through the right wall."""
+    g, pay = p.plugs, p.payload
+    x0 = _board_end_x(p) + g.usb_start
+    x1 = p.shell.width / 2 + 5.0
+    z = p.shell.back_t + 0.2 + pay.usb_z
+    return Pos((x0 + x1) / 2, p.pocket_center_y, z) * Box(x1 - x0, g.usb_w, g.usb_h)
+
+
+def grove_plug_dummy(p: Tnd01Params):
+    """Grove plug outside the port plus the cable bend after it."""
+    g, pay = p.plugs, p.payload
+    length = g.grove_out + g.grove_bend
+    z = p.shell.back_t + 0.2 + pay.grove_z
+    return Pos(_board_end_x(p) + length / 2, p.pocket_center_y, z) * Box(length, g.grove_w, g.grove_h)
+
+
+def plug_gap(p: Tnd01Params) -> float:
+    """Free height between the bottom of the USB-C overmold and the top of the Grove plug."""
+    g, pay = p.plugs, p.payload
+    return (pay.usb_z - g.usb_h / 2) - (pay.grove_z + g.grove_h / 2)
+
+
+def check_plugs(parts: dict, p: Tnd01Params) -> list[str]:
+    problems = []
+    usb, grove = usb_plug_dummy(p), grove_plug_dummy(p)
+    overlap = (usb & grove).volume
+    if overlap > 1e-3:
+        problems.append(f"USB-C overmold touches the Grove plug ({plug_gap(p):.2f} mm gap, {overlap:.1f} mm3)")
+    for name in ("front_shell", "back_cover"):
+        overlap = (parts[name] & usb).volume
+        if overlap > 1e-3:
+            problems.append(f"USB-C overmold collides with {name} by {overlap:.2f} mm3")
+    overlap = (parts["front_shell"] & grove).volume
+    if overlap > 1e-3:
+        problems.append(f"Grove plug and cable bend collide with front_shell by {overlap:.2f} mm3")
+    return problems
+
+
 def clip_strain(p: Tnd01Params) -> float:
     """Peak strain at the tongue root when the tip opens to let the thickest
     belt past the ridge: eps = 3 t d / (2 L^2), cantilever with an end load."""
@@ -110,7 +154,21 @@ def main() -> int:
     for name, part in parts.items():
         print(f"  {name:12s} volume {part.volume / 1000:6.2f} cm3")
 
+    g = p.plugs
+    gap = plug_gap(p)
+    usb_max = 2 * (p.payload.usb_z - p.payload.grove_z - g.grove_h / 2)
+    room = p.cable_bay[1] - _board_end_x(p)
+    print(f"plugs: {gap:.2f} mm between USB-C overmold and Grove plug; "
+          f"USB-C overmold up to {usb_max:.1f} mm thick clears the Grove plug")
+    print(f"plugs: Grove plug and bend need {g.grove_out + g.grove_bend:.1f} mm, cable bay gives {room:.1f} mm")
+
     problems = check(parts, p)
+    plug_problems = check_plugs(parts, p)
+    if g.measured:
+        problems += plug_problems
+    else:
+        for msg in plug_problems:
+            print("WARN", msg, "(plug sizes are guesses: see the measurement sheet, part P)")
     for msg in problems:
         print("FAIL", msg)
 
