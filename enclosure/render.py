@@ -26,7 +26,7 @@ PALETTE = {
     "key_step": (0.42, 0.42, 0.40),
     "key_next": (0.42, 0.42, 0.40),
     "key_ack": (0.42, 0.42, 0.40),
-    "key_request": (0.42, 0.42, 0.40),
+    "key_talk": (0.42, 0.42, 0.40),
     "wheel": (0.42, 0.42, 0.40),
     "talk_button": (0.42, 0.42, 0.40),
 }
@@ -85,7 +85,7 @@ def main():
     render(parts, out / "tnd01_side.png", (1.0, 0.12, -0.25), title="TND-01  SIDE / BELT CLIP")
     explode = {
         "back_cover": (0, 0, -24),
-        "key_step": (0, 0, 12), "key_ack": (0, 0, 12), "key_request": (0, 0, 12), "key_next": (0, 12, 0),
+        "key_step": (0, 0, 12), "key_ack": (0, 0, 12), "key_talk": (0, 0, 12), "key_next": (0, 12, 0),
         "wheel": (-16, 0, 0), "talk_button": (0, 14, 0),
     }
     render(parts, out / "tnd01_exploded.png", (-0.8, 0.5, 0.75), explode=explode, title="TND-01  EXPLODED")

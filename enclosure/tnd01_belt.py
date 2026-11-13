@@ -10,19 +10,22 @@ with its function engraved next to it; no visor; no fixed battery marking;
 the wheel and the talk button are off until electronics stand behind them.
 
 Rev 0.3 fits the real Dual Button unit (48 x 24 x 15 mm with keys, maker
-drawing U025): the lower bay is full size, the ACK and REQUEST caps sit over
+drawing U025): the lower bay is full size, the ACK and TALK caps sit over
 its keys, and a cable bay at the right end holds the two Grove plugs. The
 shell is 6 mm wider for it.
 
 Rev 0.4 replaces the webbing loop with a spring belt clip, as on a
-hand-held radio: the unit comes off the belt at any time.
+hand-held radio: the unit comes off the belt at any time. The engravings
+name the keys of the final version with voice: the ribbed key is TALK (hold
+and speak a request). In stage 0, without the voice unit, it opens a guest
+request; the screen shows its current meaning.
 
 Parts:
   front_shell  - main body with payload pocket, lower bay, cable bay and plates
   back_cover   - screwed lid with the spring belt clip (or the webbing loop)
   key_step     - convex cap over StickS3 key A, right of the screen
   key_next     - pusher on the top face over StickS3 key B
-  key_ack / key_request - flat and ribbed caps over the Dual Button unit
+  key_ack / key_talk - flat and ribbed caps over the Dual Button unit
   wheel, talk_button    - only when enabled in params.Controls
 """
 from build123d import (
@@ -64,7 +67,7 @@ def _screw_points(p: Tnd01Params):
 
 
 def _dual_xs(p: Tnd01Params):
-    """X of the ACK and REQUEST keys: keys at the left end of the unit."""
+    """X of the ACK and TALK keys: keys at the left end of the unit."""
     left = p.pocket_x - p.bay[0] / 2 + p.dual.clearance
     return [left + k for k in p.dual.key_offsets]
 
@@ -159,7 +162,7 @@ def front_shell(p: Tnd01Params) -> Part:
     unit_y = (legend_y - c.legend_size / 2 + lo_b) / 2
     body = _engrave(body, "UNIT TND-01", lo_l + 7.5, unit_y, lower_top, pl.label_size,
                     pl.engrave_depth, Align.MIN)
-    for text, kx in zip(("ACK", "REQ"), _dual_xs(p)):
+    for text, kx in zip(("ACK", "TALK"), _dual_xs(p)):
         body = _engrave(body, text, kx, legend_y, lower_top, c.legend_size, pl.engrave_depth)
     body = _engrave(body, "STEP", ax, ay - c.key / 2 - 2.2, upper_top, c.legend_size, pl.engrave_depth)
     bx, bz = key_b_pos(p)
@@ -182,7 +185,7 @@ def front_shell(p: Tnd01Params) -> Part:
     hole = c.key_travel_hole
     # Key A: through the upper plate and the front wall onto the board.
     body -= Pos(ax, ay, d) * Box(hole, hole, 2 * (s.front_wall + pl.thickness) + 1)
-    # ACK and REQUEST: through the front wall into the lower bay.
+    # ACK and TALK: through the front wall into the lower bay.
     for kx in _dual_xs(p):
         body -= Pos(kx, ky, d) * Box(hole, hole, 2 * (s.front_wall + pl.lower_thickness) + 1)
     # Key B: through the top wall onto the side of the board.
@@ -261,7 +264,7 @@ def _cap(c, length, top):
 
 
 def key_caps(p: Tnd01Params):
-    """STEP (convex, key A), ACK (flat), REQUEST (ribbed). Each shape can be
+    """STEP (convex, key A), ACK (flat), TALK (ribbed). Each shape can be
     told apart by touch (P3)."""
     c, s, pl = p.controls, p.shell, p.plates
     pd = p.pocket[2]
@@ -276,9 +279,9 @@ def key_caps(p: Tnd01Params):
     if reach < 0:
         raise ValueError(f"lower bay is {-reach:.2f} mm too shallow for the Dual Button unit")
     d_len = c.key_proud + pl.lower_thickness + s.front_wall + reach
-    ack, request = (Pos(kx, ky, d_top) * _cap(c, d_len, top)
+    ack, talk = (Pos(kx, ky, d_top) * _cap(c, d_len, top)
                     for kx, top in zip(_dual_xs(p), ("flat", "ribbed")))
-    return step, ack, request
+    return step, ack, talk
 
 
 def key_next(p: Tnd01Params) -> Part:
@@ -313,14 +316,14 @@ def talk_button(p: Tnd01Params) -> Part:
 
 def build(p: Tnd01Params | None = None) -> dict:
     p = p or Tnd01Params()
-    step, ack, request = key_caps(p)
+    step, ack, talk = key_caps(p)
     parts = {
         "front_shell": front_shell(p),
         "back_cover": back_cover(p),
         "key_step": step,
         "key_next": key_next(p),
         "key_ack": ack,
-        "key_request": request,
+        "key_talk": talk,
     }
     if p.controls.wheel:
         parts["wheel"] = wheel(p)

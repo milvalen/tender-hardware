@@ -24,7 +24,7 @@ COLORS = {
     "key_step": Color(0.30, 0.30, 0.28),
     "key_next": Color(0.30, 0.30, 0.28),
     "key_ack": Color(0.30, 0.30, 0.28),
-    "key_request": Color(0.30, 0.30, 0.28),
+    "key_talk": Color(0.30, 0.30, 0.28),
     "wheel": Color(0.30, 0.30, 0.28),
     "talk_button": Color(0.30, 0.30, 0.28),  # graphite: orange is for screen alerts only
 }

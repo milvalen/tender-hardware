@@ -87,19 +87,19 @@ class Shell:
 @dataclass(frozen=True)
 class Controls:
     """One part for each firmware key: STEP (key A), NEXT (key B),
-    ACK and REQUEST (Dual Button unit). Design review rev 0.1, R1."""
+    ACK and TALK (Dual Button unit). Design review rev 0.1, R1; TALK since rev 0.4."""
 
     key: float = 8.0  # square key cap
     key_travel_hole: float = 8.4
     key_proud: float = 2.0  # how far the cap stands above the front plate
-    dual_gap: float = 0.2  # free gap between the ACK / REQUEST caps and the Dual Button keys
+    dual_gap: float = 0.2  # free gap between the ACK / TALK caps and the Dual Button keys
     pusher_w: float = 9.0  # NEXT pusher on the top face, over StickS3 key B
     pusher_d: float = 6.0
     pusher_h: float = 3.0
     legend_size: float = 2.6  # engraved key function names
     # Placeholders from rev 0.1, off until they have electronics behind them
-    # (design review R1, R5). The wheel waits for the desk test; the talk
-    # button waits for the voice unit (stage 1).
+    # (design review R1, R5). The wheel waits for the desk test. The separate
+    # talk button on the top face is replaced by the TALK key (rev 0.4).
     wheel: bool = False
     talk: bool = False
     wheel_d: float = 14.0
