@@ -41,6 +41,15 @@ def dual_dummy(p: Tnd01Params):
     return Pos(p.pocket_x, bay_center_y(p), p.shell.back_t + d.height / 2) * Box(d.length, d.width, d.height)
 
 
+def clip_strain(p: Tnd01Params) -> float:
+    """Peak strain at the tongue root when the tip opens to let the thickest
+    belt past the ridge: eps = 3 t d / (2 L^2), cantilever with an end load."""
+    c = p.clip
+    free = c.length - c.root_h - c.flare_len / 2
+    opening = c.belt_max + c.ridge_h - c.gap
+    return 3 * c.thickness * opening / (2 * free * free)
+
+
 def check(parts: dict, p: Tnd01Params) -> list[str]:
     problems = []
     for name, part in parts.items():
@@ -71,6 +80,10 @@ def check(parts: dict, p: Tnd01Params) -> list[str]:
         missing = ring.volume - (ring & parts["front_shell"]).volume
         if missing > math.pi * r * r * 8 + 0.5:
             problems.append(f"screw at ({sx:.1f}, {sy:.1f}): less than {wall} mm wall around the pilot hole")
+    if p.back_mount == "clip":
+        strain = clip_strain(p)
+        if strain > p.clip.max_strain:
+            problems.append(f"belt clip: {strain:.1%} strain at full opening, limit {p.clip.max_strain:.0%}")
     cl, cr = p.cable_bay
     if cr - cl < p.shell.cable_bay_min:
         problems.append(f"cable bay is {cr - cl:.1f} mm wide, needs {p.shell.cable_bay_min:.1f} mm")
@@ -88,10 +101,12 @@ def main() -> int:
     parts = build(p)
 
     bb = Compound(children=list(parts.values())).bounding_box()
-    print(f"envelope: {bb.size.X:.1f} x {bb.size.Y:.1f} x {bb.size.Z:.1f} mm (with belt loop and controls)")
+    print(f"envelope: {bb.size.X:.1f} x {bb.size.Y:.1f} x {bb.size.Z:.1f} mm (with back mount and controls)")
     print(f"shell: {p.shell.width:.1f} x {p.shell.height:.1f} x {p.depth:.1f} mm")
     cl, cr = p.cable_bay
     print(f"lower bay: {p.bay[0]:.1f} x {p.bay[1]:.1f} mm, cable bay: {cr - cl:.1f} mm wide")
+    if p.back_mount == "clip":
+        print(f"belt clip: {clip_strain(p):.1%} strain at full opening for a {p.clip.belt_max} mm belt")
     for name, part in parts.items():
         print(f"  {name:12s} volume {part.volume / 1000:6.2f} cm3")
 

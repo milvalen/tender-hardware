@@ -1,4 +1,4 @@
-"""TND-01 belt module enclosure rev 0.3, concept B.
+"""TND-01 belt module enclosure rev 0.4, concept B.
 
 Ink Industrial design language: asymmetric faceted shell, overlapping armour
 plates with exposed screws, stencil-style markings. Orange stays on the
@@ -14,9 +14,12 @@ drawing U025): the lower bay is full size, the ACK and REQUEST caps sit over
 its keys, and a cable bay at the right end holds the two Grove plugs. The
 shell is 6 mm wider for it.
 
+Rev 0.4 replaces the webbing loop with a spring belt clip, as on a
+hand-held radio: the unit comes off the belt at any time.
+
 Parts:
   front_shell  - main body with payload pocket, lower bay, cable bay and plates
-  back_cover   - screwed lid with the webbing belt loop
+  back_cover   - screwed lid with the spring belt clip (or the webbing loop)
   key_step     - convex cap over StickS3 key A, right of the screen
   key_next     - pusher on the top face over StickS3 key B
   key_ack / key_request - flat and ribbed caps over the Dual Button unit
@@ -30,6 +33,7 @@ from build123d import (
     FontStyle,
     Location,
     Part,
+    Plane,
     Polygon,
     Pos,
     Rot,
@@ -207,13 +211,42 @@ def back_cover(p: Tnd01Params) -> Part:
         cover -= Pos(sx, sy, s.back_t / 2) * Cylinder(s.screw_clear_d / 2, s.back_t + 1)
         cover -= Pos(sx, sy, s.screw_head_depth / 2) * Cylinder(s.screw_head_d / 2, s.screw_head_depth + 0.01)
 
-    # Webbing loop on the back: the belt runs along X through the slot.
-    loop = Pos(0, 0, -lp.depth / 2) * Box(lp.width, lp.height, lp.depth)
-    loop = chamfer(loop.edges().filter_by(Axis.X).group_by(Axis.Z)[0], 1.2)
-    slot_z = -lp.depth + lp.bridge_t + lp.slot_t / 2
-    loop -= Pos(0, 0, slot_z) * Box(lp.width + 2, lp.slot_h, lp.slot_t)
-    cover += loop
+    if p.back_mount == "loop":
+        # Webbing loop on the back: the belt runs along X through the slot.
+        loop = Pos(0, 0, -lp.depth / 2) * Box(lp.width, lp.height, lp.depth)
+        loop = chamfer(loop.edges().filter_by(Axis.X).group_by(Axis.Z)[0], 1.2)
+        slot_z = -lp.depth + lp.bridge_t + lp.slot_t / 2
+        loop -= Pos(0, 0, slot_z) * Box(lp.width + 2, lp.slot_h, lp.slot_t)
+        cover += loop
+    else:
+        cover += belt_clip(p)
     return cover
+
+
+def clip_top_y(p: Tnd01Params) -> float:
+    return p.shell.height / 2 - 2.0
+
+
+def belt_clip(p: Tnd01Params) -> Part:
+    """Side profile in the YZ plane, extruded along X. -Z is toward the body."""
+    c = p.clip
+    yt = clip_top_y(p)
+    yb = yt - c.length  # tip
+    yf = yb + c.flare_len  # flare starts
+    inner, outer = -c.gap, -c.gap - c.thickness
+    pts = [
+        (yt, 0.0), (yt - c.root_h, 0.0), (yt - c.root_h, inner),
+        (yf + c.ridge_w, inner), (yf + c.ridge_w / 2, inner + c.ridge_h), (yf, inner),
+        (yb, inner - c.flare), (yb, outer - c.flare), (yf, outer), (yt, outer),
+    ]
+    profile = Plane.YZ * Polygon(*pts, align=None)
+    clip = extrude(profile, c.width / 2, both=True)
+    # Round the long edges so the clip does not cut the belt or the shirt.
+    try:
+        clip = fillet(clip.edges().filter_by(Axis.X), c.edge_fillet)
+    except Exception:  # noqa: BLE001 - keep sharp edges if the kernel refuses
+        pass
+    return clip
 
 
 def _cap(c, length, top):

@@ -66,7 +66,7 @@ def render(parts, path, direction, explode=None, title=None, size=(1600, 1200)):
     pl.reset_camera_clipping_range()
     if title:
         pl.add_text(title, position=(40, size[1] - 70), font_size=16, color=INK, font="courier")
-        pl.add_text("UNIT TND-01 / BELT MODULE / REV 0.3", position=(40, size[1] - 105),
+        pl.add_text("UNIT TND-01 / BELT MODULE / REV 0.4", position=(40, size[1] - 105),
                     font_size=9, color=(0.35, 0.35, 0.35), font="courier")
     pl.screenshot(str(path))
     pl.close()
@@ -82,6 +82,7 @@ def main():
     parts = build(Tnd01Params())
     render(parts, out / "tnd01_front.png", (-0.55, 0.45, 1.0), title="TND-01  FRONT")
     render(parts, out / "tnd01_back.png", (0.6, 0.35, -1.0), title="TND-01  BACK")
+    render(parts, out / "tnd01_side.png", (1.0, 0.12, -0.25), title="TND-01  SIDE / BELT CLIP")
     explode = {
         "back_cover": (0, 0, -24),
         "key_step": (0, 0, 12), "key_ack": (0, 0, 12), "key_request": (0, 0, 12), "key_next": (0, 12, 0),

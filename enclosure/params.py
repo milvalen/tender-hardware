@@ -127,8 +127,34 @@ class Plates:
 
 
 @dataclass(frozen=True)
+class BeltClip:
+    """Spring clip on the back cover, as on a hand-held radio. The tongue
+    hangs down from a root block at the top; the belt goes between the
+    tongue and the cover from below. To take the unit off the belt, pull
+    the flared tip out with a finger and lift.
+
+    Print the back cover in nylon (PA12, MJF or SLS): standard SLA resin
+    breaks at about 2 % strain. build.py checks the strain at full opening.
+    """
+
+    width: float = 30.0  # X
+    length: float = 46.0  # Y, from the top of the root block to the tip
+    thickness: float = 2.6  # tongue
+    root_h: float = 8.0  # Y, root block that joins the tongue to the cover
+    gap: float = 2.0  # tongue to cover with no belt; a 4 mm belt preloads it
+    ridge_h: float = 1.0  # catch on the inner face near the tip, holds the belt bottom edge
+    ridge_w: float = 2.5
+    flare: float = 3.0  # tip bends away from the cover: lead-in and finger grip
+    flare_len: float = 7.0
+    belt_max: float = 4.5  # [?] thickest belt the clip must take
+    max_strain: float = 0.02  # limit for the check in build.py
+    edge_fillet: float = 0.8
+
+
+@dataclass(frozen=True)
 class BeltLoop:
-    """Webbing loop on the back: the belt runs along X through the loop."""
+    """Webbing loop on the back (rev 0.3): the belt runs along X through it.
+    Off since the belt clip; kept for comparison."""
 
     width: float = 42.0  # X
     height: float = 32.0  # Y, outer
@@ -146,6 +172,8 @@ class Tnd01Params:
     controls: Controls = field(default_factory=Controls)
     plates: Plates = field(default_factory=Plates)
     loop: BeltLoop = field(default_factory=BeltLoop)
+    clip: BeltClip = field(default_factory=BeltClip)
+    back_mount: str = "clip"  # "clip" (take off at any time) or "loop" (webbing loop)
 
     @property
     def pocket(self):
