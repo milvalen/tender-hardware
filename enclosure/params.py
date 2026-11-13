@@ -43,6 +43,30 @@ class Payload:
 
 
 @dataclass(frozen=True)
+class Plugs:
+    """Cable plugs at the right end of the StickS3: USB-C on top, Grove below.
+
+    build.py checks that the plug bodies do not touch each other or the shell.
+    All values are guesses until the measurement sheet in tender-vault
+    (40-hardware/measurement-sheet.md, part P) is filled in; while
+    `measured` is False, a plug problem is a warning, not a failure.
+    """
+
+    measured: bool = False
+    # USB-C overmold: the plastic body behind the metal shell. The USB Type-C
+    # specification gives 12.35 x 6.5 mm as the largest overmold [Claude].
+    usb_w: float = 12.35  # [?] along Y
+    usb_h: float = 6.5  # [?] along Z
+    usb_start: float = 0.0  # [?] board end to the front of the overmold
+    # Grove (HY2.0-4P) plug: the part that stays outside the port, and the
+    # cable bend after it. Sizes from the JST PH 4-way housing [?].
+    grove_w: float = 9.9  # [?] along Y
+    grove_h: float = 4.5  # [?] along Z
+    grove_out: float = 4.0  # [?] board end to the back of the plug
+    grove_bend: float = 3.0  # [?] cable bend after the plug, along X
+
+
+@dataclass(frozen=True)
 class DualButton:
     """M5Stack Unit Dual Button (U025), lying landscape in the lower bay,
     keys up (toward the front), keys at the left end, Grove port at the
@@ -75,7 +99,7 @@ class Shell:
     # room for it.
     rib: float = 2.0  # rib between the payload pocket and the lower bay
     cable_bay_min: float = 8.0  # [?] Grove plug length plus cable bend
-    cable_bay_above: float = 6.0  # cable bay top above the pocket centre line
+    cable_bay_above: float = 6.6  # cable bay top above the pocket centre line; 6.0 cut the widest USB-C overmold (12.35 mm)
     # Back cover screws: M2 x 16 (or longer) self-tapping into the front shell.
     screw_inset: float = 5.6  # rev 0.3: 4.6 cut the screw heads open on the 7 mm corner cuts
     screw_clear_d: float = 2.4
@@ -168,6 +192,7 @@ class BeltLoop:
 class Tnd01Params:
     payload: Payload = field(default_factory=Payload)
     dual: DualButton = field(default_factory=DualButton)
+    plugs: Plugs = field(default_factory=Plugs)
     shell: Shell = field(default_factory=Shell)
     controls: Controls = field(default_factory=Controls)
     plates: Plates = field(default_factory=Plates)
