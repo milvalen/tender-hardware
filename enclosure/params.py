@@ -198,6 +198,11 @@ class Tnd01Params:
     plates: Plates = field(default_factory=Plates)
     loop: BeltLoop = field(default_factory=BeltLoop)
     clip: BeltClip = field(default_factory=BeltClip)
+    revision: str = "0.4"
+    # True after the board values from the measurement sheet in tender-vault
+    # (40-hardware/measurement-sheet.md, parts S, D and B) are written here.
+    # Until then package.py marks the print package as a draft.
+    measured: bool = False
     back_mount: str = "clip"  # "clip" (take off at any time) or "loop" (webbing loop)
 
     @property

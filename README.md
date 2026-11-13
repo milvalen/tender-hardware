@@ -44,6 +44,7 @@ uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python build123d pyvista
 .venv/bin/python enclosure/build.py     # checks + STEP/STL to out/
 .venv/bin/python enclosure/render.py    # previews to renders/
+.venv/bin/python enclosure/package.py   # print package to out/print-package/
 ```
 
 `build.py` checks that every part is a valid solid, that the shell does not overlap the boards, that keys do not collide with the shell or press into the boards, that each screw has wall around it, the cable bay width and the belt clip strain. It exits with status 1 on a failure.
@@ -51,6 +52,8 @@ uv pip install --python .venv/bin/python build123d pyvista
 It also checks the cable plugs at the right end of the StickS3: the USB-C overmold must not touch the Grove plug or the shell, and the Grove plug with its cable bend must fit in the cable bay. The plug sizes in `Plugs` are guesses, so a plug problem is a `WARN` until `Plugs.measured` is set to `True` after the measurements.
 
 Before the export, `build.py` removes the old `tnd01_*.stl` and `tnd01_*.step` files from the output folder. `out/` then holds only the parts of the current revision.
+
+`package.py` runs the same checks and writes a print package: STL files sorted by material (`sla/`, `pa12/`), one STEP file for each part, `parts.csv` and `ORDER.txt`. The package name has `-DRAFT` and `ORDER.txt` starts with "DO NOT ORDER" while `Tnd01Params.measured` or `Plugs.measured` is false or `enclosure/` has uncommitted changes.
 
 Change dimensions in `enclosure/params.py`, not in the model code.
 
