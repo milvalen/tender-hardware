@@ -1,4 +1,4 @@
-"""TND-01 belt module enclosure rev 0.2, concept B.
+"""TND-01 belt module enclosure rev 0.3, concept B.
 
 Ink Industrial design language: asymmetric faceted shell, overlapping armour
 plates with exposed screws, stencil-style markings. Orange stays on the
@@ -9,8 +9,13 @@ Rev 0.2 follows the design review of rev 0.1 (tender-vault
 with its function engraved next to it; no visor; no fixed battery marking;
 the wheel and the talk button are off until electronics stand behind them.
 
+Rev 0.3 fits the real Dual Button unit (48 x 24 x 15 mm with keys, maker
+drawing U025): the lower bay is full size, the ACK and REQUEST caps sit over
+its keys, and a cable bay at the right end holds the two Grove plugs. The
+shell is 6 mm wider for it.
+
 Parts:
-  front_shell  - main body with payload pocket, lower bay and plates
+  front_shell  - main body with payload pocket, lower bay, cable bay and plates
   back_cover   - screwed lid with the webbing belt loop
   key_step     - convex cap over StickS3 key A, right of the screen
   key_next     - pusher on the top face over StickS3 key B
@@ -55,13 +60,14 @@ def _screw_points(p: Tnd01Params):
 
 
 def _dual_xs(p: Tnd01Params):
-    c = p.controls
-    return [c.dual_x - c.dual_pitch / 2, c.dual_x + c.dual_pitch / 2]
+    """X of the ACK and REQUEST keys: keys at the left end of the unit."""
+    left = p.pocket_x - p.bay[0] / 2 + p.dual.clearance
+    return [left + k for k in p.dual.key_offsets]
 
 
 def _board_x(p: Tnd01Params, offset: float) -> float:
     """X of a point on the board, given its distance from the left end."""
-    return -p.pocket[0] / 2 + p.payload.clearance + offset
+    return p.pocket_x - p.pocket[0] / 2 + p.payload.clearance + offset
 
 
 def key_a_pos(p: Tnd01Params):
@@ -78,14 +84,14 @@ def _engrave(body, text, x, y, top, size, depth, align=Align.CENTER):
     return body - Pos(x, y, top - depth) * extrude(label, depth + 0.1)
 
 
-def key_row_y(p: Tnd01Params):
-    return p.pocket_center_y - p.pocket[1] / 2 - p.controls.key_row_from_pocket
-
-
 def bay_center_y(p: Tnd01Params):
-    s = p.shell
-    top = p.pocket_center_y - p.pocket[1] / 2 - s.rib
-    return top - s.bay_h / 2
+    top = p.pocket_center_y - p.pocket[1] / 2 - p.shell.rib
+    return top - p.bay[1] / 2
+
+
+def key_row_y(p: Tnd01Params):
+    """The Dual Button keys are on the centre line of the unit."""
+    return bay_center_y(p)
 
 
 def front_shell(p: Tnd01Params) -> Part:
@@ -98,19 +104,24 @@ def front_shell(p: Tnd01Params) -> Part:
     body = chamfer(front_edges, s.edge_chamfer)
 
     pw, ph, pd = p.pocket
-    cy = p.pocket_center_y
-    # Payload pocket and lower bay, open to the back.
-    body -= Pos(0, cy, s.back_t + pd / 2) * Box(pw, ph, pd)
-    body -= Pos(0, bay_center_y(p), s.back_t + pd / 2) * Box(s.bay_w, s.bay_h, pd)
+    cy, px = p.pocket_center_y, p.pocket_x
+    bw, bh = p.bay
+    by = bay_center_y(p)
+    # Payload pocket, lower bay and cable bay, open to the back.
+    body -= Pos(px, cy, s.back_t + pd / 2) * Box(pw, ph, pd)
+    body -= Pos(px, by, s.back_t + pd / 2) * Box(bw, bh, pd)
+    cl, cr = p.cable_bay
+    c_top, c_bot = cy + s.cable_bay_above, by - bh / 2
+    body -= Pos((cl + cr) / 2, (c_top + c_bot) / 2, s.back_t + pd / 2) * Box(cr - cl + 0.02, c_top - c_bot, pd)
 
     # Screen window through the front wall, with a shallow bevel recess.
-    win_x = -pw / 2 + pay.clearance + pay.screen_offset + pay.screen_len / 2
+    win_x = px - pw / 2 + pay.clearance + pay.screen_offset + pay.screen_len / 2
     body -= Pos(win_x, cy, d - s.front_wall / 2) * Box(pay.screen_len, pay.screen_h, s.front_wall + 0.2)
     body -= Pos(win_x, cy, d - 0.4) * Box(pay.screen_len + 3, pay.screen_h + 3, 0.81)
 
-    # USB-C port on the right wall, centred on the right end of the board.
-    usb_z = s.back_t + pd / 2
-    body -= Pos(pw / 2 + s.width / 4, cy, usb_z) * Box(s.width / 2, pay.usb_w, pay.usb_h)
+    # USB-C plug opening in the right wall, in line with the port.
+    usb_z = s.back_t + 0.2 + pay.usb_z
+    body -= Pos(cr + s.right_wall / 2, cy, usb_z) * Box(s.right_wall + 2, pay.usb_plug_w, pay.usb_plug_h)
 
     # Upper armour plate: frames the screen window and key A.
     ax, ay = key_a_pos(p)
@@ -136,14 +147,16 @@ def front_shell(p: Tnd01Params) -> Part:
     )
     body += Pos(0, 0, d) * extrude(lower, pl.lower_thickness)
     lower_top = d + pl.lower_thickness
+    legend_y = lo_t - 3.5
 
     # Engraved markings. The unit name only: a fixed battery value would be
     # false (design review R4). Key functions next to their keys (R2).
     upper_top = d + pl.thickness
-    body = _engrave(body, "UNIT TND-01", lo_l + 7.5, lo_t - 10.0, lower_top, pl.label_size,
+    unit_y = (legend_y - c.legend_size / 2 + lo_b) / 2
+    body = _engrave(body, "UNIT TND-01", lo_l + 7.5, unit_y, lower_top, pl.label_size,
                     pl.engrave_depth, Align.MIN)
     for text, kx in zip(("ACK", "REQ"), _dual_xs(p)):
-        body = _engrave(body, text, kx, lo_t - 3.5, lower_top, c.legend_size, pl.engrave_depth)
+        body = _engrave(body, text, kx, legend_y, lower_top, c.legend_size, pl.engrave_depth)
     body = _engrave(body, "STEP", ax, ay - c.key / 2 - 2.2, upper_top, c.legend_size, pl.engrave_depth)
     bx, bz = key_b_pos(p)
     body = _engrave(body, "NEXT", bx, up_t - 1.9, upper_top, c.legend_size, pl.engrave_depth)
@@ -174,7 +187,7 @@ def front_shell(p: Tnd01Params) -> Part:
 
     if c.wheel:
         wy = bay_center_y(p)
-        slot_l, slot_r = -s.width / 2 - 1, -s.bay_w / 2 + 1
+        slot_l, slot_r = -s.width / 2 - 1, px - bw / 2 + 1
         body -= Pos((slot_l + slot_r) / 2, wy, s.back_t + pd / 2) * Box(slot_r - slot_l, c.wheel_d + 1, c.wheel_w + 1)
     if c.talk:
         body -= Pos(c.talk_x, top_y, s.back_t + pd / 2) * Box(c.talk_w - 2, s.top_wall + 1, c.talk_d - 2)
@@ -226,7 +239,10 @@ def key_caps(p: Tnd01Params):
 
     ky = key_row_y(p)
     d_top = p.depth + pl.lower_thickness + c.key_proud
-    d_len = c.key_proud + pl.lower_thickness + s.front_wall + c.dual_reach
+    reach = pd - p.dual.height - c.dual_gap  # cap stem below the front wall, down to the keys
+    if reach < 0:
+        raise ValueError(f"lower bay is {-reach:.2f} mm too shallow for the Dual Button unit")
+    d_len = c.key_proud + pl.lower_thickness + s.front_wall + reach
     ack, request = (Pos(kx, ky, d_top) * _cap(c, d_len, top)
                     for kx, top in zip(_dual_xs(p), ("flat", "ribbed")))
     return step, ack, request

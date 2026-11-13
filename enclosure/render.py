@@ -66,7 +66,7 @@ def render(parts, path, direction, explode=None, title=None, size=(1600, 1200)):
     pl.reset_camera_clipping_range()
     if title:
         pl.add_text(title, position=(40, size[1] - 70), font_size=16, color=INK, font="courier")
-        pl.add_text("UNIT TND-01 / BELT MODULE / REV 0.2", position=(40, size[1] - 105),
+        pl.add_text("UNIT TND-01 / BELT MODULE / REV 0.3", position=(40, size[1] - 105),
                     font_size=9, color=(0.35, 0.35, 0.35), font="courier")
     pl.screenshot(str(path))
     pl.close()

@@ -13,45 +13,71 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class Payload:
-    """Stage 0 board: M5Stack StickS3, lying landscape (screen at the left end)."""
+    """Stage 0 board: M5Stack StickS3, lying landscape (screen at the left end).
+
+    Values marked "drawing" are read from the maker's model size drawing
+    (K150-sticks3.pdf). Check them with calipers before the print.
+    """
 
     length: float = 48.0  # along X, maker spec
     width: float = 24.0  # along Y, maker spec
     depth: float = 15.0  # along Z, maker spec
     clearance: float = 0.3  # per side
-    # Screen position on the board, measured from the left end of the board.
-    screen_offset: float = 3.0  # [?]
-    screen_len: float = 26.0  # [?] window length along X
-    screen_h: float = 15.0  # [?] window height along Y
+    # Screen bezel position on the board, measured from the left end.
+    screen_offset: float = 3.8  # drawing
+    screen_len: float = 26.3  # drawing, along X
+    screen_h: float = 16.4  # drawing, along Y
     # StickS3 keys. Key A is on the front face, right of the screen. Key B is
     # on a long side and must face up (+Y); if it faces down on the real
     # board, turn the board and use display rotation 3 in the firmware.
-    key_a_offset: float = 38.0  # [?] centre of key A from the left end of the board
-    key_b_offset: float = 30.0  # [?] centre of key B from the left end of the board
+    key_a_offset: float = 37.5  # drawing: centre of key A from the left end of the board
+    key_b_offset: float = 24.0  # drawing: centre of key B from the left end of the board
     key_b_z: float = 7.5  # [?] centre of key B above the back face of the board
-    # USB-C port, centred on the right end of the board.
-    usb_w: float = 11.0  # [?] along Y
-    usb_h: float = 5.5  # [?] along Z
+    # The right end of the board has the USB-C port (front) and the Grove
+    # port (back), both centred along Y. Heights are above the back face.
+    usb_z: float = 10.2  # drawing
+    grove_z: float = 5.3  # drawing
+    # Opening in the right wall for a USB-C plug body, not only the port.
+    usb_plug_w: float = 12.5  # [?] along Y
+    usb_plug_h: float = 7.0  # [?] along Z
+
+
+@dataclass(frozen=True)
+class DualButton:
+    """M5Stack Unit Dual Button (U025), lying landscape in the lower bay,
+    keys up (toward the front), keys at the left end, Grove port at the
+    right end. Values from the maker's model size drawing (U025)."""
+
+    length: float = 48.0  # along X
+    width: float = 24.0  # along Y
+    height: float = 15.0  # along Z, back face to the top of the key caps
+    clearance: float = 0.3  # per side
+    key_offsets: tuple = (11.0, 25.0)  # key centres from the left end, on the centre line
+    key_d: float = 11.5  # key cap diameter
 
 
 @dataclass(frozen=True)
 class Shell:
-    width: float = 62.0  # X
+    width: float = 68.0  # X; rev 0.3: 62 left no room for the top-left screw beside the moved pocket
     height: float = 62.0  # Y
     wall: float = 2.0
+    left_wall: float = 7.6  # left of the payload pocket: room for the left screws
+    right_wall: float = 2.4  # right of the cable bay
     top_wall: float = 3.0  # above the payload pocket
     front_wall: float = 2.2  # in front of the payload
     back_t: float = 3.0  # back cover thickness
     # Asymmetric corner cuts: top-left, top-right, bottom-right, bottom-left.
     corner_cuts: tuple = (7.0, 3.0, 7.0, 4.0)
     edge_chamfer: float = 1.0
-    # Lower bay: free space under the payload for the M5Stack Dual Button unit
-    # (ACK and REQUEST keys, Grove port) in stage 0.
-    bay_w: float = 44.0
-    bay_h: float = 20.0
+    # The lower bay holds the Dual Button unit; its size comes from
+    # DualButton. The cable bay at the right end holds both Grove plugs and
+    # the short cable between them. The payload pocket moves left to make
+    # room for it.
     rib: float = 2.0  # rib between the payload pocket and the lower bay
+    cable_bay_min: float = 8.0  # [?] Grove plug length plus cable bend
+    cable_bay_above: float = 6.0  # cable bay top above the pocket centre line
     # Back cover screws: M2 x 16 (or longer) self-tapping into the front shell.
-    screw_inset: float = 4.6
+    screw_inset: float = 5.6  # rev 0.3: 4.6 cut the screw heads open on the 7 mm corner cuts
     screw_clear_d: float = 2.4
     screw_pilot_d: float = 1.7
     screw_head_d: float = 4.0
@@ -66,10 +92,7 @@ class Controls:
     key: float = 8.0  # square key cap
     key_travel_hole: float = 8.4
     key_proud: float = 2.0  # how far the cap stands above the front plate
-    key_row_from_pocket: float = 8.0  # ACK / REQUEST row centre below the payload pocket
-    dual_pitch: float = 14.0  # [?] distance between the 2 Dual Button keys
-    dual_x: float = 0.0  # [?] centre of the Dual Button key pair
-    dual_reach: float = 6.0  # [?] cap stem length inside the bay, down to the Dual Button keys
+    dual_gap: float = 0.2  # free gap between the ACK / REQUEST caps and the Dual Button keys
     pusher_w: float = 9.0  # NEXT pusher on the top face, over StickS3 key B
     pusher_d: float = 6.0
     pusher_h: float = 3.0
@@ -118,6 +141,7 @@ class BeltLoop:
 @dataclass(frozen=True)
 class Tnd01Params:
     payload: Payload = field(default_factory=Payload)
+    dual: DualButton = field(default_factory=DualButton)
     shell: Shell = field(default_factory=Shell)
     controls: Controls = field(default_factory=Controls)
     plates: Plates = field(default_factory=Plates)
@@ -127,6 +151,22 @@ class Tnd01Params:
     def pocket(self):
         p = self.payload
         return (p.length + 2 * p.clearance, p.width + 2 * p.clearance, p.depth + 0.4)
+
+    @property
+    def bay(self):
+        d = self.dual
+        return (d.length + 2 * d.clearance, d.width + 2 * d.clearance)
+
+    @property
+    def pocket_x(self):
+        """The pocket and the lower bay sit near the left wall."""
+        return -self.shell.width / 2 + self.shell.left_wall + self.pocket[0] / 2
+
+    @property
+    def cable_bay(self):
+        """X range of the cable bay, right of the pocket and the lower bay."""
+        left = self.pocket_x + max(self.pocket[0], self.bay[0]) / 2
+        return left, self.shell.width / 2 - self.shell.right_wall
 
     @property
     def depth(self):
