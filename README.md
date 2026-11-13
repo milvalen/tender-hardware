@@ -64,4 +64,4 @@ Change dimensions in `enclosure/params.py`, not in the model code.
 
 ## Branches
 
-`dev` is the default branch. `main` is the release branch and is never ahead of `dev`. Agents work in `ai/<area>` branches.
+`dev` is the default branch. `main` is the release branch and is never ahead of `dev`. Agents work in `ai/<area>` branches and merge them into `feature/<area>`. The owner reviews and accepts the work on `feature/<area>`; then it is merged into `dev`.
