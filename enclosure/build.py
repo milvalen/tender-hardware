@@ -114,6 +114,11 @@ def main() -> int:
     for msg in problems:
         print("FAIL", msg)
 
+    # Remove exports of parts that this revision no longer has, so that an old
+    # mesh cannot go to the print service by mistake. Only our own files go.
+    for old in [*out.glob("tnd01_*.stl"), *out.glob("tnd01_*.step")]:
+        old.unlink()
+
     for name, part in parts.items():
         part.label = name
         part.color = COLORS[name]
