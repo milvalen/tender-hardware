@@ -15,9 +15,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import numpy as np  # noqa: E402
 import pyvista as pv  # noqa: E402
-from build123d import Pos  # noqa: E402
+from build123d import Pos, Rot  # noqa: E402
 
 from params import Tnd01Params  # noqa: E402
+from coupon import build_coupons  # noqa: E402
 from tnd01_belt import build  # noqa: E402
 
 PALETTE = {
@@ -29,6 +30,8 @@ PALETTE = {
     "key_talk": (0.42, 0.42, 0.40),
     "wheel": (0.42, 0.42, 0.40),
     "talk_button": (0.42, 0.42, 0.40),
+    "coupon_sla": (0.17, 0.17, 0.16),
+    "coupon_pa12": (0.25, 0.27, 0.21),
 }
 PAPER = (0.95, 0.94, 0.91)
 INK = (0.06, 0.06, 0.06)
@@ -89,6 +92,10 @@ def main():
         "wheel": (-16, 0, 0), "talk_button": (0, 14, 0),
     }
     render(parts, out / "tnd01_exploded.png", (-0.8, 0.5, 0.75), explode=explode, title="TND-01  EXPLODED")
+    coupons = build_coupons(Tnd01Params())
+    # Turn the PA12 coupon so that its clip faces the camera.
+    coupons["coupon_pa12"] = Pos(46, 8, 0) * Rot(0, 180, 0) * coupons["coupon_pa12"]
+    render(coupons, out / "tnd01_coupons.png", (-0.35, 0.55, 1.0), title="TND-01  TOLERANCE COUPONS")
 
 
 if __name__ == "__main__":

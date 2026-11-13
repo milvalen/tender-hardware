@@ -5,8 +5,8 @@ Usage (from the repository root):
 
 The script builds the enclosure, runs the same checks as build.py and writes
 one folder and one zip file with:
-  sla/    STL files for SLA resin (front shell and key caps)
-  pa12/   STL file for PA12 nylon, MJF or SLS (back cover with the belt clip)
+  sla/    STL files for SLA resin (front shell, key caps, SLA test coupon)
+  pa12/   STL files for PA12 nylon, MJF or SLS (back cover, PA12 test coupon)
   step/   one STEP file for each part, for services that take STEP
   parts.csv  part, material, quantity, volume, size and print notes
   ORDER.txt  what to ask the service for
@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from build123d import export_step, export_stl  # noqa: E402
 
 from build import check, check_plugs, clip_strain  # noqa: E402
+from coupon import build_coupons  # noqa: E402
 from params import Tnd01Params  # noqa: E402
 from tnd01_belt import build  # noqa: E402
 
@@ -44,6 +45,10 @@ PLAN = {
     "key_next": ("sla", SLA, 2, "1 spare. No supports on the top face."),
     "key_ack": ("sla", SLA, 2, "1 spare. No supports on the top face."),
     "key_talk": ("sla", SLA, 2, "1 spare. No supports on the ribbed top face."),
+    "coupon_sla": ("sla", SLA, 1,
+                   "Test part: key hole, pilot hole and engraving sizes. Same resin and settings as the front shell."),
+    "coupon_pa12": ("pa12", PA12, 1,
+                    "Test part: a strip of the belt clip and screw clearance holes. Same process as the back cover."),
 }
 
 
@@ -67,6 +72,7 @@ def main() -> int:
 
     p = Tnd01Params()
     parts = build(p)
+    coupons = build_coupons(p)
 
     problems = check(parts, p)
     plug_problems = check_plugs(parts, p)
@@ -77,6 +83,11 @@ def main() -> int:
     if problems:
         print("no package: fix the failures first")
         return 1
+    for name, part in coupons.items():
+        if not part.is_valid or len(part.solids()) != 1:
+            print(f"FAIL {name}: not one valid solid")
+            return 1
+    parts = {**parts, **coupons}
     missing = [n for n in parts if n not in PLAN]
     if missing:
         print("FAIL no print plan for:", ", ".join(missing))
@@ -136,9 +147,11 @@ def main() -> int:
         f"Order 1 - SLA resin, black or dark grey: sla/ ({sla_cm3:.1f} cm3 with spares)",
         "  - Keep the 0.4 mm engraving on the front shell sharp: no supports on the front face.",
         "  - Key caps: no supports on the top faces.",
+        "  - coupon_sla is a test part: print it with the same resin and settings as the front shell.",
         "",
         f"Order 2 - PA12 nylon, MJF or SLS, dyed black: pa12/ ({pa_cm3:.1f} cm3)",
         "  - Not FDM nylon: the belt clip must be one solid part.",
+        "  - coupon_pa12 is a test part: print it with the same process as the back cover.",
         "",
         "Both orders can go to one service if it prints SLA and MJF or SLS.",
         "Ask the service for the hole and gap tolerance of each process.",

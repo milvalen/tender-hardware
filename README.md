@@ -55,6 +55,13 @@ Before the export, `build.py` removes the old `tnd01_*.stl` and `tnd01_*.step` f
 
 `package.py` runs the same checks and writes a print package: STL files sorted by material (`sla/`, `pa12/`), one STEP file for each part, `parts.csv` and `ORDER.txt`. The package name has `-DRAFT` and `ORDER.txt` starts with "DO NOT ORDER" while `Tnd01Params.measured` or `Plugs.measured` is false or `enclosure/` has uncommitted changes.
 
+The package also holds two tolerance coupons from `enclosure/coupon.py`, printed in the same order:
+
+- `coupon_sla` (SLA resin): a window at the payload pocket size, 5 square key holes with 0.10 to 0.30 mm gap per side, 5 screw pilot bosses of 1.5 to 1.9 mm, and engraving at 0.3, 0.4 and 0.5 mm depth. Labels give key gaps in hundredths of a millimetre per side and holes in tenths of a millimetre (`17` = 1.7 mm).
+- `coupon_pa12` (PA12 nylon): a 10 mm strip of the real belt clip profile and 3 screw clearance holes of 2.2 to 2.6 mm with the head recess.
+
+![Tolerance coupons](renders/tnd01_coupons.png)
+
 Change dimensions in `enclosure/params.py`, not in the model code.
 
 ## Layout
@@ -65,6 +72,8 @@ Change dimensions in `enclosure/params.py`, not in the model code.
 | `enclosure/tnd01_belt.py` | Parametric model (build123d) |
 | `enclosure/build.py` | Fit checks and STEP/STL export to `out/` |
 | `enclosure/render.py` | Preview renders to `renders/` |
+| `enclosure/coupon.py` | Tolerance coupons for the print order |
+| `enclosure/package.py` | Print package to `out/print-package/` |
 | `exports/` | Released STEP/STL files (tagged releases only) |
 
 ## Branches
